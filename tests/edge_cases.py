@@ -69,6 +69,10 @@ CASES = {
     "ข้อมูลอ่อนไหว (ชื่อ ทะเบียน บัญชี)": [("pii.csv", csv(base.head(600).assign(
         ผู้ขาย=[f"นาย สมชาย {i}" for i in range(600)], ทะเบียน=[f"กข {1000 + i}" for i in range(600)],
         **{"บัญชี 123-4-56789-0": rng.uniform(1e6, 2e6, 600)})))],
+    "วันที่มีเวลา + แต่ละสาขาขายวันละชนิด": [("timed.csv", csv(pd.DataFrame({
+        "วันเวลา": [d + pd.Timedelta(hours=int(h)) for d in days[:600] for h in (8, 12, 16)],
+        "สาขา": ["ก", "ข", "ค"] * 600, "สินค้า": rng.choice(["ทั่วไป", "ออร์แกนิก"], 1800, p=[.7, .3]),
+        "จำนวน (ชิ้น)": rng.integers(50, 150, 1800)}).assign(**{"ยอดขาย (บาท)": lambda x: x["จำนวน (ชิ้น)"] * np.where(x["สินค้า"] == "ออร์แกนิก", 120, 100)})))],
     "ไฟล์เดียวกันแนบซ้ำ 2 ครั้ง": [("a.csv", csv(base)), ("a_copy.csv", csv(base))],
     "สองไฟล์ไม่เกี่ยวกัน": [("a.csv", csv(base)), ("b.csv", csv(pd.DataFrame({"รหัส": range(100), "ค่า": rng.uniform(0, 1, 100)})))],
     "แนบ 6 ไฟล์ปนกัน": [(f"y{y}.csv", csv(base[base["วันที่"].dt.year == y])) for y in (2022, 2023, 2024)] +
@@ -129,9 +133,9 @@ for name, files in CASES.items():
                 except Exception:
                     fuzz_bad += 1
                     fail.append((name, f"กรอกเอง {t} {prm}", traceback.format_exc(limit=4)))
-    if any(e.startswith("✗") for e in errs) or fuzz_bad:
+    if errs or fuzz_bad:                     # โจทย์ที่ระบบ "เสนอเอง" ต้องวิเคราะห์ได้ทุกข้อ — วิเคราะห์ไม่ได้ถือว่าไม่ผ่าน
         bad += 1
-        print(f"✗ ล้ม      {name}: {[e for e in errs if e.startswith('✗')]} · กรอกเองล้ม {fuzz_bad}")
+        print(f"✗ ไม่ผ่าน   {name}: {errs} · กรอกเองล้ม {fuzz_bad}")
     else:
         ok += 1
         print(f"✓ ผ่าน     {name}: {len(profs)} ชุด · {len(probs)} โจทย์" + (f" · แจ้งเหตุผล {len(errs)}" if errs else ""))

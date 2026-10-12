@@ -48,7 +48,8 @@ body{{margin:0;background:#fff;font-family:'IBM Plex Sans Thai',Sarabun,sans-ser
 <script type="module">
 import {{ mount }} from "https://cdn.jsdelivr.net/npm/@stlite/browser@{STLITE}/build/stlite.js";
 const files = {json.dumps(mount_files)};
-mount({{ requirements: {json.dumps(REQUIREMENTS)}, entrypoint: "app.py", files }}, document.getElementById("root"));
+// toolbarMode viewer: ซ่อนปุ่ม Deploy / เมนูนักพัฒนาของ Streamlit จากผู้ใช้
+mount({{ requirements: {json.dumps(REQUIREMENTS)}, entrypoint: "app.py", files, streamlitConfig: {{ "client.toolbarMode": "viewer" }} }}, document.getElementById("root"));
 // ซ่อนหน้าโหลดเมื่อ Streamlit วาดหน้าแอปแล้ว
 const t = setInterval(() => {{
   if (document.querySelector('[data-testid="stMain"]')) {{ document.getElementById("boot").remove(); clearInterval(t); }}

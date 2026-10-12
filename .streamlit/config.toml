@@ -1,0 +1,3 @@
+# ซ่อนปุ่ม Deploy / เมนูนักพัฒนาของ Streamlit ตอนรันในเครื่อง
+[client]
+toolbarMode = "viewer"

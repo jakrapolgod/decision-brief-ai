@@ -474,15 +474,20 @@ def a_trend(p, value, date, by=None):
 
 
 def a_gap(p, group, amount, qty, date, site=None):
-    keys = [date] + ([site] if site else [])
     d = p.df[[c for c in [group, amount, qty, date, site] if c]].dropna()
-    d = d[d[qty] > 0]
+    d = d[d[qty] > 0].assign(_day=lambda x: x[date].dt.normalize())      # เทียบรายวัน — ตัดเวลาออก (วันที่ที่มีเวลาจะได้จับคู่กันได้)
     vol = d.groupby(group)[qty].sum().sort_values(ascending=False)
     if len(vol) < 2:
         raise ValueError(f"'{group}' มีข้อมูลแค่กลุ่มเดียวหลังตัดค่าว่าง")
     ref = vol.index[0]
-    refp = d[d[group] == ref].groupby(keys).apply(lambda x: x[amount].sum() / x[qty].sum(), include_groups=False).rename("rp")
-    o = d[d[group] != ref].join(refp, on=keys).dropna(subset=["rp"])
+
+    def pair(keys):
+        refp = d[d[group] == ref].groupby(keys).apply(lambda x: x[amount].sum() / x[qty].sum(), include_groups=False).rename("rp")
+        return d[d[group] != ref].join(refp, on=keys).dropna(subset=["rp"])
+
+    o = pair(["_day", site]) if site else pair(["_day"])
+    if o.empty and site:                    # ไม่มีวันที่จุดเดียวกันมีทั้งสองกลุ่ม → เทียบวันเดียวกันทุกจุดแทน (ระบุในข้อจำกัด)
+        o, site = pair(["_day"]), None
     if o.empty:
         raise ValueError(f"ไม่มีวันที่กลุ่มอื่นซื้อขายพร้อมกลุ่มหลัก '{ref}' ให้เทียบ")
     o["prem"] = o[amount] - o[qty] * o.rp

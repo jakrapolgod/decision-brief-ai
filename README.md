@@ -23,7 +23,7 @@ All processing happens in your browser; nothing you upload or type is sent anywh
 ## รันในเครื่อง / Run locally
 
 ```bash
-pip install streamlit pandas numpy openpyxl plotly
+pip install -r requirements.txt
 python -m streamlit run app.py --server.port 8600
 ```
 

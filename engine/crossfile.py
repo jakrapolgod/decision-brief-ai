@@ -19,7 +19,7 @@ import plotly.graph_objects as go
 from .analysis import AMBER, BAD, BLUE, GREY, OK, propose, result, style
 from .data_io import SENSITIVE_VALUE, Profile, profile_steps, read_many_steps, run_steps
 
-CERT = re.compile(r"certif|รับรอง|organic|ออร์แกนิก|premium|พรีเมียม|fair\s*trade|rspo|fsc|msc", re.I)
+CERT = re.compile(r"certif|รับรอง|organic|ออร์แกนิก|premium|พรีเมียม|fair\s*trade|rspo|cspo|fsc|msc", re.I)
 TOL_DAYS = 3
 TYPE = "premium_roi"
 
