@@ -48,7 +48,6 @@ body{{margin:0;background:#fff;font-family:'IBM Plex Sans Thai',Sarabun,sans-ser
 <script type="module">
 import {{ mount }} from "https://cdn.jsdelivr.net/npm/@stlite/browser@{STLITE}/build/stlite.js";
 const files = {json.dumps(mount_files)};
-files["site.json"] = {{ data: JSON.stringify({{ origin: location.origin }}) }};
 mount({{ requirements: {json.dumps(REQUIREMENTS)}, entrypoint: "app.py", files }}, document.getElementById("root"));
 // ซ่อนหน้าโหลดเมื่อ Streamlit วาดหน้าแอปแล้ว
 const t = setInterval(() => {{

@@ -5,14 +5,12 @@
 """
 import hashlib
 import html
-import json
 import re
 import sys
 
 import streamlit as st
 
 from engine.analysis import TYPES, guess_type
-from engine.classify import classify
 from engine.crossfile import TYPE as CROSS, load_steps, propose_all, run_any
 from engine.data_io import sensitive_cols
 from engine.publish import LINE_MAX_CHARS, build_html, download_html, line_copy_html, line_message
@@ -20,7 +18,6 @@ from engine.publish import LINE_MAX_CHARS, build_html, download_html, line_copy_
 APP = "Decision Brief AI"
 # บนเว็บ (Cloudflare Pages) แอปรันในเบราว์เซอร์ผ่าน stlite — ไฟล์ข้อมูลไม่ออกจากเครื่องผู้ใช้
 IN_BROWSER = sys.platform == "emscripten"
-SITE = json.load(open("site.json", encoding="utf-8")) if IN_BROWSER else {}
 st.set_page_config(page_title=APP, page_icon="📊", layout="wide")
 st.markdown("""
 <style>
@@ -149,31 +146,14 @@ else:
     q = st.text_area("พิมพ์โจทย์หรือคำถามที่อยากให้วิเคราะห์", placeholder="เช่น ปีไหน yield ดีที่สุด / ลูกค้ารายใหญ่กระจุกแค่ไหน / สินค้าออร์แกนิกขายแพงกว่าทั่วไปเท่าไหร่")
     cross = [c for c in probs if c["type"] == CROSS]
     types = [k for k in TYPES if k != CROSS or cross]           # โจทย์ข้ามไฟล์ใช้ได้เมื่อแนบไฟล์ซื้อ + ไฟล์ขาย
-    # จัดประเภทด้วย Clef (decision model) ก่อน · เรียกไม่ได้ค่อยใช้กฎคำเดิม · เรียกครั้งเดียวต่อข้อความโจทย์
-    clf = None
-    if q and q.strip():
-        if S.get("clf_q") != q.strip():
-            with st.spinner("Clef กำลังจัดประเภทโจทย์…"):
-                S.clf = classify(q.strip(), SITE.get("origin"))
-            S.clf_q = q.strip()
-        clf = S.clf
-    if clf:
-        ranked = sorted(types, key=lambda k: -clf["probabilities"].get(k, 0))   # ประเภทที่ใช้กับไฟล์ชุดนี้ไม่ได้ถูกข้ามไป
-        g = ranked[0]
-    else:
-        g = guess_type(q or "")
+    # จัดประเภทด้วยกฎคำในเครื่อง — ไม่ส่งข้อความโจทย์ออกไปไหน
+    g = guess_type(q or "")
     t = st.selectbox("วิธีวิเคราะห์ (ระบบเดาให้จากคำถาม แก้ได้)", types, index=types.index(g if g in types else "gap"), format_func=lambda k: TYPES[k])
-    if clf:
-        pr_ = clf["probabilities"]
-        top = max(pr_, key=pr_.get)
-        if top not in types:                                  # เช่น โจทย์ความคุ้มค่าซื้อ vs ขาย แต่แนบไฟล์มาชุดเดียว
-            st.warning(f"Clef มองว่าโจทย์นี้เป็น '{TYPES.get(top, top)}' ({pr_[top]:.0%}) ซึ่งต้องแนบไฟล์ซื้อและไฟล์ขายคู่กัน "
-                       "— แนบไฟล์เพิ่มแล้วระบบจะเสนอให้เอง หรือเลือกวิธีอื่นด้านบน")
+    if q and q.strip():
+        if g not in types:                                    # เช่น โจทย์ความคุ้มค่าซื้อ vs ขาย แต่แนบไฟล์มาชุดเดียว
+            st.warning(f"โจทย์นี้น่าจะเป็น '{TYPES[g]}' ซึ่งต้องแนบไฟล์ซื้อและไฟล์ขายคู่กัน — แนบไฟล์เพิ่มแล้วระบบจะเสนอให้เอง หรือเลือกวิธีอื่นด้านบน")
         else:
-            st.caption(f"Clef แนะนำ: {TYPES[ranked[0]]} ({pr_.get(ranked[0], 0):.0%}) · อันดับ 2: {TYPES[ranked[1]]} ({pr_.get(ranked[1], 0):.0%})"
-                       " · ส่งเฉพาะข้อความโจทย์ไปจัดประเภท ไม่ส่งข้อมูลในไฟล์")
-    elif q and q.strip():
-        st.caption("เชื่อมต่อ Clef ไม่ได้ — ใช้กฎคำเดิมเดาประเภทแทน (ตรวจและแก้ได้)")
+            st.caption("ระบบเดาวิธีวิเคราะห์จากคำในโจทย์ — ตรวจและเปลี่ยนได้ถ้าไม่ตรง")
     if t == CROSS:
         chosen = premium_settings(dict(cross[0], title=q.strip(), question=q.strip(), weight=None)) if q else None
     else:
