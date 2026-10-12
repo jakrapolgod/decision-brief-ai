@@ -1,0 +1,21 @@
+# ไฟล์ข้อมูลของผู้ใช้ — ห้ามขึ้น git
+*.xlsx
+*.xlsm
+*.xls
+*.csv
+*.tsv
+*.txt
+!requirements.txt
+output/
+tests/*_result*.json
+tests/*_result*.csv
+
+# ค่าลับ
+.dev.vars
+.env*
+
+# ไฟล์ที่สร้างขึ้นเอง / cache
+web/public/
+.wrangler/
+__pycache__/
+*.pyc
